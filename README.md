@@ -42,7 +42,7 @@ variables [here](#-list-of-available-environment-variables):<br>
 # Environment variables
 
 | Variable               | Required | Purpose                                                                                                                   |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+|------------------------| -------- | ------------------------------------------------------------------------------------------------------------------------- |
 | SPRING_PROFILES_ACTIVE | YES      | your environment, currently it can be `dev` or `prod`                                                                     |
 | DATABASE               | YES      | your chosen database. For example: `postgresql`                                                                           |
 | DRIVER_CLASS_NAME      | YES      | example for postgresql: `org.postgresql.Driver`                                                                           |
@@ -60,6 +60,7 @@ variables [here](#-list-of-available-environment-variables):<br>
 | DB_PASSWORD            | YES      | password of database user                                                                                                 |
 | BCRYPT_STRENGTH        | NO       | this service will en/decrypt token using `bcrypt`, you can define how strong you want this algorithm to be. Default: `12` |
 | API_VERSION            | YES      | API version. For example: `v1`                                                                                            |
+| MAVEN_OPTS             | NO       | set this to `--enable-preview` to run on |
 | LOG_PATH               | NO       | path to log folder                                                                                                        |
 
 For the full .env file example, check

@@ -187,6 +187,16 @@
 					</excludes>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<mainClass>org.service.user.chat_app_user_service.ChatAppUserServiceApplication</mainClass>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>io.spring.javaformat</groupId>
 				<artifactId>spring-javaformat-maven-plugin</artifactId>
