@@ -30,7 +30,9 @@ public class UserController implements UserApi {
 
 	@Override
 	public ResponseEntity<UserDTO> getUser(@PathVariable BigInteger userId) {
-		return new ResponseEntity(userService.getUserById(userId), HttpStatus.OK);
+		UserDTO userDTO = userService.getUserById(userId);
+		log.error("USERID: " + userDTO.userId());
+		return new ResponseEntity(userDTO, HttpStatus.OK);
 	}
 
 	@Override

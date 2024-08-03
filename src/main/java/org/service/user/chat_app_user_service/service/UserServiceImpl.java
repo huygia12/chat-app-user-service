@@ -48,6 +48,7 @@ public class UserServiceImpl implements UserService {
 		UserDTO userDTO = userRepository.findById(userId)
 			.map(userDTOMapper::apply)
 			.orElseThrow(() -> new UserNotFoundException(StatusMessage.USER_NOT_FOUND));
+
 		return userDTO;
 	}
 
