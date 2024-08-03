@@ -1,0 +1,14 @@
+logging:
+  level:
+    org:
+      service:
+        user:
+          chat_app_user_service:
+            configurations:
+              AppConfiguration: INFO
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

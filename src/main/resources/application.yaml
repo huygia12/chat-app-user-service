@@ -1,0 +1,75 @@
+server:
+  port: ${PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,beans
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: "user management service"
+    description: "api for chat app's user management"
+    version: ${API_VERSION}
+
+spring:
+  output:
+    ansi:
+      enabled: always # color terminal output
+  datasource:
+    url: ${DB_DRIVER}/${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require&sslcert=${DB_ROOT_CERT}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DRIVER_CLASS_NAME}
+  jpa:
+    hibernate:
+      ddl-auto: none # create-drop if you want to recreate the table script (use none in prod)
+      show-sql: false
+      database: ${DATABASE}
+    properties:
+      hibernate:
+        default_schema: public
+    open-in-view: false # https://stackoverflow.com/questions/30549489/what-is-this-spring-jpa-open-in-view-true-property-in-spring-boot
+
+# Logging
+# The current logger is log4j2
+# The default log4j2 config file is resources/log4j2-spring.xml
+# You can define attributes here to override the value in config file
+#
+logging:
+  level:
+    web: debug
+  org:
+    springframework:
+      web: debug
+      jdbc: debug
+      security: trace
+    hibernate:
+      SQL: debug
+      type:
+        descriptor:
+          sql:
+            BasicBinder: trace
+
+log4j2:
+  Script:
+    enableLanguages: groovy
+# Lazy initialization
+# spring.main.lazy-initialization=true
+
+
+
+
+
+
+
+
+
+
+
+
+
