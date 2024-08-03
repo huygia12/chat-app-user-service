@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @Service
@@ -31,13 +30,13 @@ public class UserServiceImpl implements UserService {
 
 	private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
+	private final IdGeneratorService idGeneratorService;
+
 	private final UserDTOMapper userDTOMapper;
 
 	private final UserRepository userRepository;
 
 	private final PasswordEncoder passwordEncoder;
-
-	private static int id = 123123;
 
 	@Override
 	public void deleteUserById(BigInteger userId) {
@@ -100,20 +99,20 @@ public class UserServiceImpl implements UserService {
 			throw new UserExistedException(StatusMessage.NAME_EXISTED);
 		}
 
-		User user = new User();
+		BigInteger newID = idGeneratorService.generateID();
 
-		user.setUserId(new BigInteger(STR."\{id++}"));
-		user.setEmail(userInsertDTO.getEmail());
-		user.setUsername(userInsertDTO.getUsername());
-		user.setPassword(userInsertDTO.getPassword());
-		user.setFirstName(userInsertDTO.getFirstName());
-		user.setLastName(userInsertDTO.getLastName());
-		user.setBirthday(userInsertDTO.getBirthday());
-		user.setGender(Gender.valueOf(userInsertDTO.getGender()));
-		user.setRole(Role.valueOf("USER"));
-		user.setPhoneNumber(userInsertDTO.getPhoneNumber());
-		user.setStatus(UserStatus.valueOf("OFFLINE"));
-		user.setAvatarUrl(userInsertDTO.getAvatarUrl());
+		User user = User.builder().userId(newID)
+				.email(userInsertDTO.getEmail())
+				.username(userInsertDTO.getUsername())
+				.password(passwordEncoder.encode(userInsertDTO.getPassword()))
+				.firstName(userInsertDTO.getFirstName())
+				.lastName(userInsertDTO.getLastName())
+				.birthday(userInsertDTO.getBirthday())
+				.gender(Gender.valueOf(userInsertDTO.getGender()))
+				.role(Role.valueOf("USER"))
+				.phoneNumber(userInsertDTO.getPhoneNumber())
+				.status(UserStatus.valueOf("OFFLINE"))
+				.avatarUrl(userInsertDTO.getAvatarUrl()).build();
 
 		userRepository.save(user);
 	}

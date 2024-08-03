@@ -80,6 +80,11 @@ public class User implements Cloneable {
 	@JsonAlias({ "avatar_url" })
 	private String avatarUrl;
 
+	@Column(name = "refresh_tokens", nullable = false, columnDefinition = "text[]")
+	@JsonAlias({ "refresh_tokens" })
+	@Builder.Default
+	private String[] refreshTokens = new String[0];
+
 	@Column(name = "created_at", nullable = false)
 	@JsonAlias({ "created_at" })
 	@Builder.Default

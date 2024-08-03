@@ -16,6 +16,12 @@ info:
     description: "api for chat app's user management"
     version: ${API_VERSION}
 
+grpc:
+  client:
+      id-generator-service:
+          address: ${ID_GENERATOR_SERVICE_URL}
+          negotiationType: PLAINTEXT
+
 spring:
   output:
     ansi:

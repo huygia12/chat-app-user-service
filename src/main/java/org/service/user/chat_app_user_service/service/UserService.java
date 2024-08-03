@@ -4,7 +4,6 @@ import org.service.user.chat_app_user_service.DTO.UserDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserInsertDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
-import org.service.user.chat_app_user_service.exception.user.UserInvalidException;
 import org.service.user.chat_app_user_service.exception.user.UserNotFoundException;
 
 import java.math.BigInteger;
