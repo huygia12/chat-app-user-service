@@ -4,5 +4,6 @@ import java.math.BigInteger;
 
 public interface IdGeneratorService {
 
-    public BigInteger generateID();
+	public BigInteger generateID();
+
 }

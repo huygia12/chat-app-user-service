@@ -91,28 +91,30 @@ public class UserServiceImpl implements UserService {
 		User userEmailHolder = getUserByEmail(userInsertDTO.getEmail());
 		User userNameHolder = getUserByName(userInsertDTO.getUsername());
 
-		if(userEmailHolder != null) {
+		if (userEmailHolder != null) {
 			throw new UserExistedException(StatusMessage.EMAIL_EXISTED);
 		}
 
-		if(userNameHolder != null) {
+		if (userNameHolder != null) {
 			throw new UserExistedException(StatusMessage.NAME_EXISTED);
 		}
 
 		BigInteger newID = idGeneratorService.generateID();
 
-		User user = User.builder().userId(newID)
-				.email(userInsertDTO.getEmail())
-				.username(userInsertDTO.getUsername())
-				.password(passwordEncoder.encode(userInsertDTO.getPassword()))
-				.firstName(userInsertDTO.getFirstName())
-				.lastName(userInsertDTO.getLastName())
-				.birthday(userInsertDTO.getBirthday())
-				.gender(Gender.valueOf(userInsertDTO.getGender()))
-				.role(Role.valueOf("USER"))
-				.phoneNumber(userInsertDTO.getPhoneNumber())
-				.status(UserStatus.valueOf("OFFLINE"))
-				.avatarUrl(userInsertDTO.getAvatarUrl()).build();
+		User user = User.builder()
+			.userId(newID)
+			.email(userInsertDTO.getEmail())
+			.username(userInsertDTO.getUsername())
+			.password(passwordEncoder.encode(userInsertDTO.getPassword()))
+			.firstName(userInsertDTO.getFirstName())
+			.lastName(userInsertDTO.getLastName())
+			.birthday(userInsertDTO.getBirthday())
+			.gender(Gender.valueOf(userInsertDTO.getGender()))
+			.role(Role.valueOf("USER"))
+			.phoneNumber(userInsertDTO.getPhoneNumber())
+			.status(UserStatus.valueOf("OFFLINE"))
+			.avatarUrl(userInsertDTO.getAvatarUrl())
+			.build();
 
 		userRepository.save(user);
 	}

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.service.user.chat_app_user_service.constants.StatusMessage;
 
 @Data
 @AllArgsConstructor
@@ -14,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class UserPasswdUpdateDTO {
 
 	@Schema(example = "123456")
-	@Size(min = 6, message = "Old password must contain at least 6 character")
+	@Size(min = 6, message = StatusMessage.PASSWORD_MINIMUM)
 	private String oldPassword;
 
 	@Schema(example = "12345@")
-	@Size(min = 6, message = "New password must contain at least 6 character")
+	@Size(min = 6, message = StatusMessage.PASSWORD_MINIMUM)
 	private String newPassword;
 
 }

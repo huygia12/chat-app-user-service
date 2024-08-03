@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.service.user.chat_app_user_service.constants.Gender;
+import org.service.user.chat_app_user_service.constants.StatusMessage;
 import org.service.user.chat_app_user_service.utils.ValueOfEnum;
 
 import java.time.LocalDate;
@@ -20,7 +21,7 @@ public class UserInsertDTO {
 	static final String EMPTY_CHECKING_PATTERN = "^(?!\s*$).+";
 
 	@Schema(example = "abc@gmail.com")
-	@Email(message = "Email is not valid")
+	@Email(message = StatusMessage.EMAIL_INVALID)
 	@NotNull
 	@Pattern(regexp = EMPTY_CHECKING_PATTERN, message = "email is mandatory")
 	private String email;
@@ -48,11 +49,11 @@ public class UserInsertDTO {
 
 	@Schema(example = "2004-07-14")
 	@NotNull
-	@Past(message = "Date of birth must be a day in the past")
+	@Past(message = StatusMessage.BIRTH_DATE_INVALID)
 	private LocalDate birthday;
 
 	@Schema(example = "MALE")
-	@ValueOfEnum(enumClass = Gender.class, message = "Gender invalid")
+	@ValueOfEnum(enumClass = Gender.class, message = StatusMessage.GENDER_INVALID)
 	@NotNull
 	@Pattern(regexp = EMPTY_CHECKING_PATTERN, message = "gender is mandatory")
 	private String gender;

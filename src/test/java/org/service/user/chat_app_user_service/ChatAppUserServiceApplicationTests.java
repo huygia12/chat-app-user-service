@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import org.service.user.chat_app_user_service.DTO.UserDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
+import org.service.user.chat_app_user_service.constants.StatusMessage;
 import org.service.user.chat_app_user_service.exception.user.UserInvalidException;
 import org.service.user.chat_app_user_service.exception.user.UserNotFoundException;
 import org.service.user.chat_app_user_service.service.UserService;
@@ -122,7 +123,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("Email is not valid"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_INVALID));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
@@ -146,7 +147,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("Date of birth must be a day in the past"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.BIRTH_DATE_INVALID));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
@@ -170,7 +171,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("Gender invalid"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.GENDER_INVALID));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
@@ -184,7 +185,7 @@ class ChatAppUserServiceApplicationTests {
 		String content = mapper.writeValueAsString(userUpdateRequest);
 
 		//When
-		Mockito.doThrow(new UserNotFoundException(STR."User with id \{userID} does not exist"))
+		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
 				.when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
 
 		try{
@@ -193,7 +194,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(STR."User with id \{userID} does not exist"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
 
 			//Then
 			assertThrows(UserNotFoundException.class, () -> userService.updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any()));
@@ -220,14 +221,14 @@ class ChatAppUserServiceApplicationTests {
 	@Test
 	void deleteUser_userNotFound_fail() {
 		//When
-		Mockito.doThrow(new UserNotFoundException(STR."User with id \{userID} does not exist"))
+		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
 				.when(userService).deleteUserById(ArgumentMatchers.any());
 
 		try{
 			mockMvc.perform(MockMvcRequestBuilders
 							.delete(STR."\{userUrl}\{userID}"))
 					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(STR."User with id \{userID} does not exist"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
 
 			//Then
 			assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(ArgumentMatchers.any()));
@@ -256,14 +257,14 @@ class ChatAppUserServiceApplicationTests {
 	@Test
 	void getUser_userNotFound_fail() {
 		//When
-		Mockito.doThrow(new UserNotFoundException(STR."User with id \{userID} does not exist"))
+		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
 				.when(userService).getUserById(ArgumentMatchers.any());
 
 		try{
 			mockMvc.perform(MockMvcRequestBuilders
 							.get(STR."\{userUrl}\{userID}"))
 					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(STR."User with id \{userID} does not exist"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
 
 			//Then
 			assertThrows(UserNotFoundException.class, () -> userService.getUserById(ArgumentMatchers.any()));
@@ -297,7 +298,7 @@ class ChatAppUserServiceApplicationTests {
 		String content = mapper.writeValueAsString(passwdUpdateRequest);
 
 		//When, Then
-		Mockito.doThrow(new UserInvalidException("Wrong password"))
+		Mockito.doThrow(new UserInvalidException(StatusMessage.WRONG_PASSWORD))
 			.when(userService).updatePassword(ArgumentMatchers.any(), ArgumentMatchers.any());
 
 		try{
@@ -306,7 +307,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isUnprocessableEntity())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("Wrong password"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.WRONG_PASSWORD));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
@@ -326,7 +327,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("Old password must contain at least 8 character"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.PASSWORD_MINIMUM));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
@@ -346,7 +347,7 @@ class ChatAppUserServiceApplicationTests {
 							.contentType(MediaType.APPLICATION_JSON_VALUE)
 							.content(content))
 					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value("New password must contain at least 8 character"));
+					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.PASSWORD_MINIMUM));
 		}catch(Exception e){
 			fail(e.getMessage());
 		}
