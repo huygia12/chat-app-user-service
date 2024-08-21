@@ -8,6 +8,7 @@ import org.service.user.chat_app_user_service.DTO.request.UserInsertDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
 import org.service.user.chat_app_user_service.constants.StatusMessage;
+import org.service.user.chat_app_user_service.service.IdGeneratorService;
 import org.service.user.chat_app_user_service.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,8 @@ public class UserController implements UserApi {
 
 	private final UserService userService;
 
+	private final IdGeneratorService idGeneratorService;
+
 	@Override
 	public ResponseEntity<List<UserDTO>> getUsers() {
 		return new ResponseEntity(userService.getUsers(), HttpStatus.OK);
@@ -31,7 +34,6 @@ public class UserController implements UserApi {
 	@Override
 	public ResponseEntity<UserDTO> getUser(@PathVariable BigInteger userId) {
 		UserDTO userDTO = userService.getUserById(userId);
-		log.error("USERID: " + userDTO.userId());
 		return new ResponseEntity(userDTO, HttpStatus.OK);
 	}
 
@@ -56,7 +58,7 @@ public class UserController implements UserApi {
 
 	@Override
 	public ResponseEntity deleteUser(@PathVariable BigInteger userId) {
-		userService.deleteUserById(userId);
+		userService.updateUserDeletedDate(userId);
 		return new ResponseEntity(StatusMessage.SUCCESS, HttpStatus.OK);
 	}
 

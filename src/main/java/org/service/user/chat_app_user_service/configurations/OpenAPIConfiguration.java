@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Profile;
 				license = @License(name = "Api license"), termsOfService = "Terms of service"),
 		tags = { @Tag(name = "User Management", description = "edit, delete and get users information") })
 @Configuration
-// @Profile({ "dev" })
 public class OpenAPIConfiguration {
 
 	public GroupedOpenApi groupedOpenApi() {

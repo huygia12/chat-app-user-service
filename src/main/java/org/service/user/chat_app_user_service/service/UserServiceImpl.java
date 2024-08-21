@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +45,18 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public void deleteUserByEmail(String email) {
+		userRepository.deleteByEmail(email);
+	}
+
+	@Override
+	public void updateUserDeletedDate(BigInteger userId) {
+		User user = getUserFullAttributes(userId);
+		user.setDeletedAt(LocalDateTime.now());
+		userRepository.save(user);
+	}
+
+	@Override
 	public UserDTO getUserById(BigInteger userId) throws UserNotFoundException {
 		UserDTO userDTO = userRepository.findById(userId)
 			.map(userDTOMapper::apply)
@@ -54,14 +67,20 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public void updateUserById(BigInteger userId, UserUpdateDTO userUpdateDTO) throws UserNotFoundException {
+		UserDTO userIDHolder = getUserById(userId);
+
+		if (userIDHolder == null) {
+			throw new UserExistedException(StatusMessage.USER_NOT_FOUND);
+		}
+
 		User userEmailHolder = getUserByEmail(userUpdateDTO.getEmail());
 		User userNameHolder = getUserByName(userUpdateDTO.getUsername());
 
-		if (userEmailHolder != null) {
+		if (userEmailHolder != null && userEmailHolder.getUserId() != userId) {
 			throw new UserExistedException(StatusMessage.EMAIL_EXISTED);
 		}
 
-		if (userNameHolder != null) {
+		if (userNameHolder != null && userNameHolder.getUserId() != userId) {
 			throw new UserExistedException(StatusMessage.NAME_EXISTED);
 		}
 
@@ -88,6 +107,12 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public void add(User user) {
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+		userRepository.save(user);
+	}
+
+	@Override
 	public void signup(UserInsertDTO userInsertDTO) throws UserExistedException {
 		User userEmailHolder = getUserByEmail(userInsertDTO.getEmail());
 		User userNameHolder = getUserByName(userInsertDTO.getUsername());
@@ -106,7 +131,7 @@ public class UserServiceImpl implements UserService {
 			.userId(newID)
 			.email(userInsertDTO.getEmail())
 			.username(userInsertDTO.getUsername())
-			.password(passwordEncoder.encode(userInsertDTO.getPassword()))
+			.password(userInsertDTO.getPassword())
 			.firstName(userInsertDTO.getFirstName())
 			.lastName(userInsertDTO.getLastName())
 			.birthday(userInsertDTO.getBirthday())
@@ -117,14 +142,13 @@ public class UserServiceImpl implements UserService {
 			.avatarUrl(userInsertDTO.getAvatarUrl())
 			.build();
 
-		userRepository.save(user);
+		add(user);
 	}
 
 	@Override
 	public void updatePassword(BigInteger userId, UserPasswdUpdateDTO userPasswordDTO)
 			throws UserNotFoundException, UserInvalidException {
 		User user = getValidUser(userId, userPasswordDTO.getOldPassword());
-
 		user.setPassword(passwordEncoder.encode(userPasswordDTO.getNewPassword()));
 		userRepository.save(user);
 	}

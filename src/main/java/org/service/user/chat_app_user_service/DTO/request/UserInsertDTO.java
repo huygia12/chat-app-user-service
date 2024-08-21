@@ -27,8 +27,8 @@ public class UserInsertDTO {
 	private String email;
 
 	@Schema(example = "123456")
+	@Size(min = 6, message = StatusMessage.PASSWORD_MINIMUM)
 	@NotNull
-	@Min(6)
 	@Pattern(regexp = EMPTY_CHECKING_PATTERN, message = "password is mandatory")
 	private String password;
 
