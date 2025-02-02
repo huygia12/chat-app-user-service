@@ -15,11 +15,9 @@ import org.service.user.chat_app_user_service.constants.StatusMessage;
 public class UserPasswdUpdateDTO {
 
 	@Schema(example = "123456")
-	@Size(min = 6, message = StatusMessage.PASSWORD_MINIMUM)
 	private String oldPassword;
 
 	@Schema(example = "12345@")
-	@Size(min = 6, message = StatusMessage.PASSWORD_MINIMUM)
 	private String newPassword;
 
 }

@@ -8,9 +8,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.service.user.chat_app_user_service.DTO.UserDTO;
-import org.service.user.chat_app_user_service.DTO.request.UserInsertDTO;
+import org.service.user.chat_app_user_service.DTO.request.UserInsertionDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
+import org.service.user.chat_app_user_service.DTO.request.ValidUserDTO;
 import org.service.user.chat_app_user_service.constants.StatusMessage;
 import org.service.user.chat_app_user_service.exception.ErrorResponse;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,19 @@ public interface UserApi {
 	@GetMapping(value = "/{userId}")
 	public ResponseEntity<UserDTO> getUser(@PathVariable("userId") BigInteger userId);
 
+	@Operation(summary = "Get valid user",
+			responses = {
+					@ApiResponse(responseCode = "200", description = StatusMessage.SUCCESS,
+							content = @Content(schema = @Schema(implementation = UserDTO.class))),
+					@ApiResponse(responseCode = "404", description = StatusMessage.USER_NOT_FOUND,
+							content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+									mediaType = "application/json")),
+					@ApiResponse(responseCode = "422", description = StatusMessage.WRONG_PASSWORD,
+							content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+									mediaType = "application/json")) })
+	@PostMapping(value = "/valid-user")
+	public ResponseEntity<UserDTO> getValidUser(@RequestBody @Valid ValidUserDTO validUserDTO);
+
 	@Operation(summary = "Update user by id",
 			responses = {
 					@ApiResponse(responseCode = "200", description = StatusMessage.SUCCESS,
@@ -64,7 +78,7 @@ public interface UserApi {
 							content = @Content(schema = @Schema(implementation = ErrorResponse.class),
 									mediaType = "application/json")) })
 	@PostMapping("/signup")
-	public ResponseEntity signup(@RequestBody @Valid UserInsertDTO userInsertDTO);
+	public ResponseEntity signup(@RequestBody @Valid UserInsertionDTO userInsertDTO);
 
 	@Operation(summary = "Update user's password by id",
 			responses = {

@@ -21,7 +21,7 @@ spring:
     ansi:
       enabled: always # color terminal output
   datasource:
-    url: ${DB_DRIVER}/${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require&sslcert=${DB_ROOT_CERT}
+    url: ${DB_DRIVER}/${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: ${DRIVER_CLASS_NAME}
@@ -32,7 +32,7 @@ spring:
       database: ${DATABASE}
     properties:
       hibernate:
-        default_schema: public
+        default_schema: '"user"'
     open-in-view: false # https://stackoverflow.com/questions/30549489/what-is-this-spring-jpa-open-in-view-true-property-in-spring-boot
 
 # Logging
@@ -60,16 +60,4 @@ log4j2:
     enableLanguages: groovy
 # Lazy initialization
 # spring.main.lazy-initialization=true
-
-
-
-
-
-
-
-
-
-
-
-
 

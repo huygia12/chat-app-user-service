@@ -24,5 +24,5 @@ COPY certs/ certs/
 RUN chown -R javauser:javauser /app
 USER javauser
 
-EXPOSE 8030
+EXPOSE 8200
 ENTRYPOINT ["java", "--enable-preview", "org.springframework.boot.loader.launch.JarLauncher"]

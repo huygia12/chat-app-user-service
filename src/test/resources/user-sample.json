@@ -1,6 +1,5 @@
 [
   {
-    "id": 1,
     "email": "t+@example.com",
     "username": "gQJoBOBTbU",
     "password": "%I%#^#^It*V%",
@@ -13,7 +12,6 @@
     "role": "ADMIN"
   },
   {
-    "id": 2,
     "email": "9+@example.com",
     "username": "ULfLqu",
     "password": "&^y*i_@_*3&*^",
@@ -26,7 +24,6 @@
     "role": "USER"
   },
   {
-    "id": 3,
     "email": "a+@example.com",
     "username": "PaiRZJYzMoEl",
     "password": "$@$^^6_+q+yc+&w$",
@@ -39,7 +36,6 @@
     "role": "USER"
   },
   {
-    "id": 4,
     "email": "I+@example.com",
     "username": "iphHNam",
     "password": "3BpW!!@*",
@@ -52,7 +48,6 @@
     "role": "USER"
   },
   {
-    "id": 5,
     "email": "j+@example.com",
     "username": "yusrnwfEO",
     "password": "$@$3_+$%e$^&@7#",

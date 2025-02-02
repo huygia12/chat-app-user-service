@@ -1,0 +1,59 @@
+services:
+  snowflake:
+    container_name: id-generator
+    image: ilikeblue/snowflake-uuid:dev-latest
+    env_file:
+      - path: ./id-generator/.env
+        required: true
+    volumes:
+      - ./certs:/etc/certs:ro
+    networks:
+      - chat-app-network
+
+  user:
+    container_name: user-service
+    image: huygia12/chat-app-user-service:dev-latest
+    depends_on:
+      snowflake:
+        condition: service_started
+      pgdb:
+        condition: service_healthy
+    ports:
+      - "8200:80"
+    env_file:
+      - path: ./user-service/.env
+        required: true
+    volumes:
+      - ./certs:/etc/certs:ro
+    networks:
+      - chat-app-network
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  pgdb:
+    container_name: chat-app-db
+    image: postgres:13.5
+    env_file:
+      - path: ./pgdb/.env
+        required: true
+    volumes:
+      - chat-app-db-data:/var/lib/postgresql/data
+    networks:
+      - chat-app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d chat-app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  chat-app-db-data:
+    name: dev_chat-app-db-data
+    external: true
+
+networks:
+  chat-app-network:
+    driver: bridge
+    name: chat-app-network
