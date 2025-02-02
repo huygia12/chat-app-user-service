@@ -60,7 +60,6 @@ out/
 src/main/resources/secrets.yaml
 
 .env
-.env.*
 /certs/*
 certs/
 logs/
