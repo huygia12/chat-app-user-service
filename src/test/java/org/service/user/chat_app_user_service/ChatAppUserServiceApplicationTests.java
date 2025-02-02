@@ -1,355 +1,465 @@
 package org.service.user.chat_app_user_service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
-import org.service.user.chat_app_user_service.DTO.UserDTO;
-import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
-import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
 import org.service.user.chat_app_user_service.constants.StatusMessage;
-import org.service.user.chat_app_user_service.exception.user.UserInvalidException;
-import org.service.user.chat_app_user_service.exception.user.UserNotFoundException;
+import org.service.user.chat_app_user_service.entity.User;
 import org.service.user.chat_app_user_service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.math.BigInteger;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource("/test.properties")
 class ChatAppUserServiceApplicationTests {
 
-	private final String userUrl = "/api/v1/users/";
+	private static final int PORT = 8030;
+
+	private static final String VERSION = "v1";
+
+	private static final String PROTOCOL = "http";
+
+	private static final String DOMAIN = "localhost";
+
+	private static final String API_URL;
+
+	private static final String SIGNUP_URL;
+
+	private static List<User> tempUsers;
+
+	static {
+		API_URL = "%s://%s:%s/api/%s/users".formatted(PROTOCOL, DOMAIN, PORT, VERSION);
+
+		SIGNUP_URL = "%s/signup".formatted(API_URL);
+	}
 
 	@Autowired
 	private MockMvc mockMvc;
 
-	@MockBean
+	@Autowired
 	private UserService userService;
 
-	private BigInteger userID;
-
-	private UserUpdateDTO userUpdateRequest;
-
-	private UserDTO userUpdateResponse;
-
-	private UserPasswdUpdateDTO passwdUpdateRequest;
+	private User randomUser;
 
 	@BeforeEach
 	public void setup() {
-		userID = new BigInteger("123123");
-		userUpdateRequest = UserUpdateDTO.builder()
-			.email("123@gmail.com")
-			.username("Huy")
-			.firstName("Ryan")
-			.lastName("Reiner")
-			.gender("MALE")
-			.phoneNumber("123-123-121")
-			.avatarUrl("/avt.jpg")
-			.birthday(LocalDate.of(1999, 2, 1))
-			.build();
-
-		userUpdateResponse = UserDTO.builder()
-			.userId(userID)
-			.email(userUpdateRequest.getEmail())
-			.username(userUpdateRequest.getUsername())
-			.firstName(userUpdateRequest.getFirstName())
-			.lastName(userUpdateRequest.getLastName())
-			.gender(userUpdateRequest.getGender())
-			.phoneNumber(userUpdateRequest.getPhoneNumber())
-			.avatarUrl(userUpdateRequest.getAvatarUrl())
-			.birthday(userUpdateRequest.getBirthday())
-			.createdAt(LocalDateTime.of(2024, 7, 7, 7, 7, 7))
-			.build();
-
-		passwdUpdateRequest = UserPasswdUpdateDTO.builder().oldPassword("12345678").newPassword("1234567@").build();
+		tempUsers = getSampleUserFromJson();
+		int size = tempUsers.size();
+		randomUser = tempUsers.get((int) (Math.random() * size));
 	}
 
-	@Test
-	void updateUser_validRequest_success() throws JsonProcessingException {
-		//Given
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		String content = mapper.writeValueAsString(userUpdateRequest);
-
-		//When, Then
-		Mockito.doNothing().when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-						.put(STR."\{userUrl}\{userID}")
-						.contentType(MediaType.APPLICATION_JSON_VALUE)
-						.content(content))
-					.andExpect(MockMvcResultMatchers.status().isOk());
-		}catch(Exception e){
-			fail(e.getMessage());
+	private static List<User> getSampleUserFromJson() {
+		try (InputStream is = new ClassPathResource("user-sample.json").getInputStream()) {
+			ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+			return Arrays.asList(mapper.readValue(is, User[].class));
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
-	@Test
-	void updateUser_invalidEmail_fail() throws JsonProcessingException {
-		//Given
-		userUpdateRequest.setEmail("123gmail.com");
-
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		String content = mapper.writeValueAsString(userUpdateRequest);
-
-		//When, Then
-		Mockito.doNothing().when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.put(STR."\{userUrl}\{userID}")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_INVALID));
-		}catch(Exception e){
-			fail(e.getMessage());
+	private static String buildUpdatePasswordBodyRequest(String oldPassword, String newPassword)
+			throws JsonProcessingException {
+		if (newPassword == null || oldPassword == null) {
+			throw new NullPointerException();
 		}
+
+		ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+		ObjectNode root = mapper.createObjectNode();
+
+		ObjectNode pwJson = mapper.createObjectNode();
+		pwJson.put("oldPassword", oldPassword);
+		pwJson.put("newPassword", newPassword);
+
+		root.setAll(pwJson);
+
+		return mapper.writeValueAsString(root);
+	}
+
+	private static String buildUpdateUserBodyRequest(User user) throws JsonProcessingException {
+		ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+		ObjectNode root = mapper.createObjectNode();
+
+		ObjectNode userJson = mapper.createObjectNode();
+		userJson.put("email", user.getEmail());
+		userJson.put("username", user.getUsername());
+		userJson.put("firstName", user.getFirstName());
+		userJson.put("lastName", user.getLastName());
+		userJson.put("gender", user.getGender().getName());
+		userJson.put("phoneNumber", user.getPhoneNumber());
+		userJson.put("avatarUrl", user.getAvatarUrl());
+		userJson.put("birthday", user.getBirthday().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+		root.setAll(userJson);
+
+		return mapper.writeValueAsString(root);
+	}
+
+	private static String buildSignupUserBodyRequest(User user) throws JsonProcessingException {
+		ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+		ObjectNode root = mapper.createObjectNode();
+
+		ObjectNode userJson = mapper.createObjectNode();
+		userJson.put("email", user.getEmail());
+		userJson.put("username", user.getUsername());
+		userJson.put("password", user.getPassword());
+
+		root.setAll(userJson);
+
+		return mapper.writeValueAsString(root);
+	}
+
+	private void addTempUsers() {
+		tempUsers.forEach(user -> userService.add(user));
+	}
+
+	private void removeTempUsers() {
+		tempUsers.forEach(user -> userService.deleteUserById(user.getUserId()));
+	}
+
+	private static JsonNode convertStringToJson(String msg) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		return mapper.readTree(msg);
 	}
 
 	@Test
-	void updateUser_invalidBirthDate_fail() throws JsonProcessingException {
-		//Given
-		userUpdateRequest.setBirthday(LocalDate.of(2999, 2, 1));
-
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		String content = mapper.writeValueAsString(userUpdateRequest);
-
-		//When, Then
-		Mockito.doNothing().when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.put(STR."\{userUrl}\{userID}")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.BIRTH_DATE_INVALID));
-		}catch(Exception e){
-			fail(e.getMessage());
-		}
-	}
-
-	@Test
-	void updateUser_genderInvalid_fail() throws JsonProcessingException {
-		//Given
-		userUpdateRequest.setGender("RAINBOW");
-
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		String content = mapper.writeValueAsString(userUpdateRequest);
-
-		//When, Then
-		Mockito.doNothing().when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.put(STR."\{userUrl}\{userID}")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.GENDER_INVALID));
-		}catch(Exception e){
-			fail(e.getMessage());
-		}
-	}
-
-	@Test
-	void updateUser_userNotFound_fail() throws JsonProcessingException {
-		//Given
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		String content = mapper.writeValueAsString(userUpdateRequest);
-
-		//When
-		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
-				.when(userService).updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.put(STR."\{userUrl}\{userID}")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
-
-			//Then
-			assertThrows(UserNotFoundException.class, () -> userService.updateUserById(ArgumentMatchers.any(), ArgumentMatchers.any()));
-		}catch(Exception e){
-			fail(e.getMessage());
-		}
-	}
-
-	@Test
-	void deleteUser_validRequest_success() {
-		//When
-		Mockito.doNothing()
-				.when(userService).deleteUserById(ArgumentMatchers.any());
-
+	void updateUser_200ValidRequest_success() throws JsonProcessingException {
 		try {
-			mockMvc.perform(MockMvcRequestBuilders
-							.delete(STR."\{userUrl}\{userID}"))
-					.andExpect(MockMvcResultMatchers.status().isOk());
-		} catch (Exception e) {
+			// Given
+			addTempUsers();
+			randomUser.setEmail("r+@example.com");
+			randomUser.setUsername("Jimmy");
+
+			mockMvc
+				.perform(MockMvcRequestBuilders.put("%s/%s".formatted(API_URL, randomUser.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdateUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isOk());
+
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void deleteUser_userNotFound_fail() {
-		//When
-		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
-				.when(userService).deleteUserById(ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.delete(STR."\{userUrl}\{userID}"))
-					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
-
-			//Then
-			assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(ArgumentMatchers.any()));
-		}catch(Exception e){
-			fail(e.getMessage());
-		}
-	}
-
-	@Test
-	void getUser_validRequest_success() {
-		//When
-		Mockito.when(userService.getUserById(ArgumentMatchers.any()))
-				.thenReturn(userUpdateResponse);
-
+	void updateUser_400InvalidEmail_fail() throws JsonProcessingException {
 		try {
-			mockMvc.perform(MockMvcRequestBuilders
-							.get(STR."\{userUrl}\{userID}"))
-					.andExpect(MockMvcResultMatchers.status().isOk())
-					.andExpect(MockMvcResultMatchers.jsonPath("userId").value(userID));
+			// Given
+			addTempUsers();
+			randomUser.setEmail("123gmail.com");
 
-		} catch (Exception e) {
+			mockMvc
+				.perform(MockMvcRequestBuilders.put("%s/%s".formatted(API_URL, randomUser.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdateUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_INVALID));
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void getUser_userNotFound_fail() {
-		//When
-		Mockito.doThrow(new UserNotFoundException(StatusMessage.USER_NOT_FOUND))
-				.when(userService).getUserById(ArgumentMatchers.any());
+	void updateUser_400InvalidBirthDate_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
+			randomUser.setBirthday(LocalDate.of(2999, 2, 1));
 
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.get(STR."\{userUrl}\{userID}"))
-					.andExpect(MockMvcResultMatchers.status().isNotFound())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
-
-			//Then
-			assertThrows(UserNotFoundException.class, () -> userService.getUserById(ArgumentMatchers.any()));
-		}catch(Exception e){
+			mockMvc
+				.perform(MockMvcRequestBuilders.put("%s/%s".formatted(API_URL, randomUser.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdateUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.BIRTH_DATE_INVALID));
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void updatePassword_validRequest_success() throws JsonProcessingException {
-		//Given
-		ObjectMapper mapper = new ObjectMapper();
-		String content = mapper.writeValueAsString(passwdUpdateRequest);
+	void updateUser_404UserNotFound_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
 
-		//When, Then
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.patch(STR."\{userUrl}\{userID}/password")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isOk());
-		}catch(Exception e){
+			mockMvc
+				.perform(MockMvcRequestBuilders.put("%s/1111112222".formatted(API_URL))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdateUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isNotFound())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void updatePassword_oldPasswordIncorrect_fail() throws JsonProcessingException {
-		//Given
-		ObjectMapper mapper = new ObjectMapper();
-		String content = mapper.writeValueAsString(passwdUpdateRequest);
+	void updateUser_409EmailAlreadyBeenUsed_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
 
-		//When, Then
-		Mockito.doThrow(new UserInvalidException(StatusMessage.WRONG_PASSWORD))
-			.when(userService).updatePassword(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.patch(STR."\{userUrl}\{userID}/password")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isUnprocessableEntity())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.WRONG_PASSWORD));
-		}catch(Exception e){
+			mockMvc
+				.perform(MockMvcRequestBuilders.put("%s/%s".formatted(API_URL, randomUser.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdateUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isConflict())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_EXISTED));
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void updatePassword_oldPasswordNotEnoughCharacter_fail() throws JsonProcessingException {
-		//Given
-		passwdUpdateRequest.setOldPassword("123");
-		ObjectMapper mapper = new ObjectMapper();
-		String content = mapper.writeValueAsString(passwdUpdateRequest);
+	void deleteUser_200ValidRequest_success() {
+		try {
+			// When
+			addTempUsers();
 
-		//When, Then
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.patch(STR."\{userUrl}\{userID}/password")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.PASSWORD_MINIMUM));
-		}catch(Exception e){
+			mockMvc
+				.perform(MockMvcRequestBuilders.delete("%s/%s".formatted(API_URL, randomUser.getUserId().toString())))
+				.andExpect(MockMvcResultMatchers.status().isOk());
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 
 	@Test
-	void updatePassword_newPasswordNotEnoughCharacter_fail() throws JsonProcessingException {
-		//Given
-		passwdUpdateRequest.setNewPassword("123");
-		ObjectMapper mapper = new ObjectMapper();
-		String content = mapper.writeValueAsString(passwdUpdateRequest);
+	void deleteUser_404UserNotFound_fail() {
+		// When
+		try {
+			addTempUsers();
 
-		//When, Then
-		try{
-			mockMvc.perform(MockMvcRequestBuilders
-							.patch(STR."\{userUrl}\{userID}/password")
-							.contentType(MediaType.APPLICATION_JSON_VALUE)
-							.content(content))
-					.andExpect(MockMvcResultMatchers.status().isBadRequest())
-					.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.PASSWORD_MINIMUM));
-		}catch(Exception e){
+			mockMvc.perform(MockMvcRequestBuilders.delete("%s/1111112222".formatted(API_URL)))
+				.andExpect(MockMvcResultMatchers.status().isNotFound())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
+		}
+		catch (Exception e) {
 			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void getUser_200ValidRequest_success() {
+		try {
+			addTempUsers();
+
+			String response = mockMvc
+				.perform(MockMvcRequestBuilders.get("%s/%s".formatted(API_URL, randomUser.getUserId().toString())))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+			JsonNode body = convertStringToJson(response);
+			assertEquals(randomUser.getUserId(), new BigInteger(body.get("userId").asText()));
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void getUser_404UserNotFound_fail() {
+		try {
+			// When
+			addTempUsers();
+
+			mockMvc.perform(MockMvcRequestBuilders.get("%s/1111112222".formatted(API_URL)))
+				.andExpect(MockMvcResultMatchers.status().isNotFound())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.USER_NOT_FOUND));
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void updatePassword_200ValidRequest_success() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
+
+			User user = tempUsers.get(0);
+
+			mockMvc
+				.perform(MockMvcRequestBuilders.patch("%s/%s/password".formatted(API_URL, user.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdatePasswordBodyRequest("%I%#^#^It*V%", "%I%#^#^It*")))
+				.andExpect(MockMvcResultMatchers.status().isOk());
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void updatePassword_422OldPasswordIncorrect_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
+			String password = "121123";
+
+			mockMvc
+				.perform(MockMvcRequestBuilders
+					.patch("%s/%s/password".formatted(API_URL, randomUser.getUserId().toString()))
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildUpdatePasswordBodyRequest(password, "121werwe")))
+				.andExpect(MockMvcResultMatchers.status().isUnprocessableEntity())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.WRONG_PASSWORD));
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void signup_200ValidRequest_success() throws JsonProcessingException {
+		// Start snowflake-service to do test this
+		String newEmail = "r+@example.com";
+		try {
+			// Given
+			addTempUsers();
+
+			randomUser.setEmail(newEmail);
+			randomUser.setUsername("Jimmy");
+
+			mockMvc
+				.perform(MockMvcRequestBuilders.post(SIGNUP_URL)
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildSignupUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isOk());
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			userService.deleteUserByEmail(newEmail);
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void signup_409EmailAlreadyBeenUsed_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
+
+			mockMvc
+				.perform(MockMvcRequestBuilders.post(SIGNUP_URL)
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildSignupUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isConflict())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_EXISTED));
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void signup_400InvalidEmail_fail() throws JsonProcessingException {
+		try {
+			// Given
+			addTempUsers();
+			randomUser.setEmail("123gmail.com");
+
+			mockMvc
+				.perform(MockMvcRequestBuilders.post(SIGNUP_URL)
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.content(buildSignupUserBodyRequest(randomUser)))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest())
+				.andExpect(MockMvcResultMatchers.jsonPath("message").value(StatusMessage.EMAIL_INVALID));
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
+		}
+	}
+
+	@Test
+	void getUsers_200ValidRequest_success() {
+		try {
+			// When
+			addTempUsers();
+
+			mockMvc.perform(MockMvcRequestBuilders.get("%s".formatted(API_URL)))
+				.andExpect(MockMvcResultMatchers.status().isOk());
+		}
+		catch (Exception e) {
+			fail(e.getMessage());
+		}
+		finally {
+			removeTempUsers();
 		}
 	}
 

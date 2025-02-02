@@ -1,0 +1,19 @@
+# Ignore Maven build directories
+target/
+build/
+
+# Ignore IDE and editor settings
+.idea/
+.vscode/
+*.iml
+
+# Ignore logs and temp files
+*.log
+*.tmp
+.DS_Store
+
+# Ignore environment & secret files
+.env
+*.pem
+*.crt
+*.key

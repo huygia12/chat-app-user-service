@@ -9,5 +9,5 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-  show-actuator: true
-  paths-to-match: /actuator/health, /actuator/info, /api/**
+  show-actuator: false
+  paths-to-match: /healthcheck, /api/**

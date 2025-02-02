@@ -32,34 +32,34 @@ public class User implements Cloneable {
 	@Column(nullable = false, unique = true, columnDefinition = "text")
 	private String email;
 
-	@Column(nullable = false, columnDefinition = "text")
+	@Column(nullable = false, unique = true, columnDefinition = "text")
 	private String username;
 
 	@Column(nullable = false, columnDefinition = "text")
 	private String password;
-
-	@Column(name = "first_name", nullable = false, columnDefinition = "text")
-	@JsonAlias({ "first_name" })
-	private String firstName;
-
-	@Column(name = "last_name", nullable = false, columnDefinition = "text")
-	@JsonAlias({ "last_name" })
-	private String lastName;
-
-	@Column(nullable = false)
-	private LocalDate birthday;
-
-	@Column(nullable = false)
-	@Enumerated(EnumType.STRING)
-	@JdbcType(PostgreSQLEnumJdbcType.class)
-	private Gender gender;
 
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	@JdbcType(PostgreSQLEnumJdbcType.class)
 	private Role role;
 
-	@Column(name = "phone_number", nullable = false, columnDefinition = "text")
+	@Column(name = "first_name", nullable = true, columnDefinition = "text")
+	@JsonAlias({ "first_name" })
+	private String firstName;
+
+	@Column(name = "last_name", nullable = true, columnDefinition = "text")
+	@JsonAlias({ "last_name" })
+	private String lastName;
+
+	@Column(nullable = true)
+	private LocalDate birthday;
+
+	@Column(nullable = true)
+	@Enumerated(EnumType.STRING)
+	@JdbcType(PostgreSQLEnumJdbcType.class)
+	private Gender gender;
+
+	@Column(name = "phone_number", nullable = true, columnDefinition = "text")
 	@JsonAlias({ "phone_number" })
 	private String phoneNumber;
 

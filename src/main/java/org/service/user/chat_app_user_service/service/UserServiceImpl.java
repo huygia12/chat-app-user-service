@@ -1,8 +1,12 @@
 package org.service.user.chat_app_user_service.service;
 
-import lombok.AllArgsConstructor;
+import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.service.user.chat_app_user_service.DTO.UserDTO;
-import org.service.user.chat_app_user_service.DTO.request.UserInsertDTO;
+import org.service.user.chat_app_user_service.DTO.request.UserInsertionDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserPasswdUpdateDTO;
 import org.service.user.chat_app_user_service.DTO.request.UserUpdateDTO;
 import org.service.user.chat_app_user_service.constants.Gender;
@@ -15,20 +19,14 @@ import org.service.user.chat_app_user_service.exception.user.UserInvalidExceptio
 import org.service.user.chat_app_user_service.exception.user.UserNotFoundException;
 import org.service.user.chat_app_user_service.repository.UserRepository;
 import org.service.user.chat_app_user_service.utils.UserDTOMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
-
-	private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	private final IdGeneratorService idGeneratorService;
 
@@ -44,6 +42,18 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public void deleteUserByEmail(String email) {
+		userRepository.deleteByEmail(email);
+	}
+
+	@Override
+	public void updateUserDeletedDate(BigInteger userId) {
+		User user = getUserFullAttributes(userId);
+		user.setDeletedAt(LocalDateTime.now());
+		userRepository.save(user);
+	}
+
+	@Override
 	public UserDTO getUserById(BigInteger userId) throws UserNotFoundException {
 		UserDTO userDTO = userRepository.findById(userId)
 			.map(userDTOMapper::apply)
@@ -54,14 +64,20 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public void updateUserById(BigInteger userId, UserUpdateDTO userUpdateDTO) throws UserNotFoundException {
-		User userEmailHolder = getUserByEmail(userUpdateDTO.getEmail());
-		User userNameHolder = getUserByName(userUpdateDTO.getUsername());
+		UserDTO userIDHolder = getUserById(userId);
 
-		if (userEmailHolder != null) {
+		if (userIDHolder == null) {
+			throw new UserNotFoundException(StatusMessage.USER_NOT_FOUND);
+		}
+
+		User duplicatedUserWithEmail = getUserByEmail(userUpdateDTO.getEmail());
+		User duplicatedUserWithName = getUserByName(userUpdateDTO.getUsername());
+
+		if (duplicatedUserWithEmail != null && duplicatedUserWithEmail.getUserId() != userId) {
 			throw new UserExistedException(StatusMessage.EMAIL_EXISTED);
 		}
 
-		if (userNameHolder != null) {
+		if (duplicatedUserWithName != null && duplicatedUserWithName.getUserId() != userId) {
 			throw new UserExistedException(StatusMessage.NAME_EXISTED);
 		}
 
@@ -88,7 +104,15 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void signup(UserInsertDTO userInsertDTO) throws UserExistedException {
+	public void add(User user) {
+		BigInteger newID = idGeneratorService.generateID();
+		user.setUserId(newID);
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+		userRepository.save(user);
+	}
+
+	@Override
+	public void signup(UserInsertionDTO userInsertDTO) throws UserExistedException {
 		User userEmailHolder = getUserByEmail(userInsertDTO.getEmail());
 		User userNameHolder = getUserByName(userInsertDTO.getUsername());
 
@@ -106,25 +130,18 @@ public class UserServiceImpl implements UserService {
 			.userId(newID)
 			.email(userInsertDTO.getEmail())
 			.username(userInsertDTO.getUsername())
-			.password(passwordEncoder.encode(userInsertDTO.getPassword()))
-			.firstName(userInsertDTO.getFirstName())
-			.lastName(userInsertDTO.getLastName())
-			.birthday(userInsertDTO.getBirthday())
-			.gender(Gender.valueOf(userInsertDTO.getGender()))
-			.role(Role.valueOf("USER"))
-			.phoneNumber(userInsertDTO.getPhoneNumber())
-			.status(UserStatus.valueOf("OFFLINE"))
-			.avatarUrl(userInsertDTO.getAvatarUrl())
+			.password(userInsertDTO.getPassword())
+			.role(Role.USER)
+			.status(UserStatus.OFFLINE)
 			.build();
 
-		userRepository.save(user);
+		add(user);
 	}
 
 	@Override
 	public void updatePassword(BigInteger userId, UserPasswdUpdateDTO userPasswordDTO)
 			throws UserNotFoundException, UserInvalidException {
 		User user = getValidUser(userId, userPasswordDTO.getOldPassword());
-
 		user.setPassword(passwordEncoder.encode(userPasswordDTO.getNewPassword()));
 		userRepository.save(user);
 	}
@@ -138,8 +155,21 @@ public class UserServiceImpl implements UserService {
 		return users;
 	}
 
-	private User getValidUser(BigInteger userId, String password) throws UserNotFoundException, UserInvalidException {
-		User user = getUserFullAttributes(userId);
+	@Override
+	public UserDTO getValidUser(String email, String password) throws UserNotFoundException, UserInvalidException {
+		User user = getUserByEmail(email);
+
+		if (user == null) {
+			throw new UserNotFoundException(StatusMessage.USER_NOT_FOUND);
+		}
+
+		UserDTO userDTO = userDTOMapper.apply(user);
+
+		return userDTO;
+	}
+
+	public User getValidUser(BigInteger id, String password) throws UserNotFoundException, UserInvalidException {
+		User user = getUserFullAttributes(id);
 
 		if (!isValid(password, user)) {
 			throw new UserInvalidException(StatusMessage.WRONG_PASSWORD);
@@ -156,8 +186,8 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findByEmail(email).orElse(null);
 	}
 
-	private boolean isValid(String password, User user) {
-		return passwordEncoder.matches(password, user.getPassword());
+	private boolean isValid(String plainPassword, User user) {
+		return passwordEncoder.matches(plainPassword, user.getPassword());
 	}
 
 	private User getUserFullAttributes(BigInteger userId) throws UserNotFoundException {
